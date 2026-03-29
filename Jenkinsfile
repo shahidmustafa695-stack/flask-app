@@ -1,39 +1,46 @@
 pipeline {
-    agent any;
-    
+    agent any
+
     stages {
-        stage("Code") {
+
+        stage("code") {
             steps {
-            git url: 'https://github.com/yo-its-anas/flask-app.git', branch: 'main'
+                git url: 'https://github.com/shahidmustafa695-stack/flask-app.git', branch: 'main'
             }
         }
-        stage("Build") {
+
+        stage("build") {
             steps {
-            sh 'docker build -t flask-app .'
+                sh 'docker build -t my-app:latest .'
             }
         }
-        stage("Test") {
+
+        stage("testing") {
             steps {
-            echo "Test stage done..."
+                echo "testing successfully."
             }
         }
-        stage("Push to Docker Hub") {
+
+        stage("push to docker hub") {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId:'dockerHubCreds',
-                    usernameVariable:'dockerHubUser',
-                    passwordVariable:'dockerHubPass')]){
-                        sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
-                        sh "docker image tag flask-app ${env.dockerHubUser}/flask-app:latest"
-                        sh "docker push ${env.dockerHubUser}/flask-app:latest"
-                    }
+                    credentialsId: 'dockerHubcreds',   // Must match Jenkins credentials ID
+                    usernameVariable: 'DOCKER_USER', 
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        docker login -u $DOCKER_USER -p $DOCKER_PASS
+                        docker tag my-app:latest $DOCKER_USER/my-app:latest
+                        docker push $DOCKER_USER/my-app:latest
+                    '''
+                }
             }
         }
-        stage("Deployment") {
-            steps { 
-            sh "docker-compose down"    
-            sh "docker-compose up --build -d"
-                
+
+        stage("deploy") {
+            steps {
+                sh 'docker-compose down'
+                sh 'docker-compose up -d --build'
             }
         }
     }
