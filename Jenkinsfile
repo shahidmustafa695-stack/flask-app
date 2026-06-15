@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     stages {
-
         stage("code") {
             steps {
                 git url: 'https://github.com/shahidmustafa695-stack/flask-app.git', branch: 'main'
@@ -15,32 +14,26 @@ pipeline {
             }
         }
 
-        stage("testing") {
-            steps {
-                echo "testing successfully."
-            }
-        }
-
-        stage("push to docker hub") {
+        stage("push to docker Hub") {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'dockerHubcreds',   // Must match Jenkins credentials ID
-                    usernameVariable: 'DOCKER_USER', 
-                    passwordVariable: 'DOCKER_PASS'
+                    credentialsId: 'dockerHubCreds',
+                    usernameVariable: 'dockerHubUser',
+                    passwordVariable: 'dockerHubPass'
                 )]) {
-                    sh '''
-                        docker login -u $DOCKER_USER -p $DOCKER_PASS
-                        docker tag my-app:latest $DOCKER_USER/my-app:latest
-                        docker push $DOCKER_USER/my-app:latest
-                    '''
+                    sh 'docker login -u $dockerHubUser -p $dockerHubPass'
+                    sh 'docker tag my-app:latest $dockerHubUser/my-app:latest'
+                    sh 'docker push $dockerHubUser/my-app:latest'
                 }
             }
         }
 
         stage("deploy") {
             steps {
-                sh 'docker-compose down'
-                sh 'docker-compose up -d --build'
+                sh '''
+                    docker-compose down
+                    docker-compose up -d
+                '''
             }
         }
     }
